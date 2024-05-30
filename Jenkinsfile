@@ -62,7 +62,7 @@ pipeline {
         stage('creating container for ladingpage') {
             steps{ 
                 script {
-                    sh "ssh ubuntu@52.66.186.93/home/ubuntu/login-ecr.sh"             
+                    sh "ssh ubuntu@52.66.186.93 /home/ubuntu/login-ecr.sh"             
                     sh "ssh ubuntu@52.66.186.93 sudo docker rm -f ${IMAGE_REPO_NAME}-${BRANCH_NAME} || true"
                     sh "ssh ubuntu@52.66.186.93 sudo docker images -a -q | xargs docker rmi -f || true"
                     sh "ssh ubuntu@52.66.186.93 sudo docker network create vijay"
