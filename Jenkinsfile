@@ -42,7 +42,7 @@ pipeline {
         stage('Building image') {
             steps{
                 script {
-                    sh "docker build -t ${REPOSITORY_URI}:${BRANCH_NAME} ./backend-fastify"
+                    sh "docker build -t back${REPOSITORY_URI}:${BRANCH_NAME} ./backend-fastify"
                     sh "docker build -t front${REPOSITORY_URI}:${BRANCH_NAME} ./frontend"   
                 }
             }
@@ -52,7 +52,7 @@ pipeline {
         stage('Pushing to ECR') {
             steps{ 
                 script {
-                    sh "docker push ${REPOSITORY_URI}:${BRANCH_NAME}"
+                    sh "docker push back${REPOSITORY_URI}:${BRANCH_NAME}"
                     sh "docker push front${REPOSITORY_URI}:${BRANCH_NAME}"
                 }
             }
@@ -66,9 +66,8 @@ pipeline {
                     sh "ssh ubuntu@52.66.186.93 sudo docker rm -f ${IMAGE_REPO_NAME}-${BRANCH_NAME} || true"
                     sh "ssh ubuntu@52.66.186.93 sudo docker images -a -q | xargs docker rmi -f || true"
                     sh "ssh ubuntu@52.66.186.93 sudo docker network create vijay"
-                    sh "ssh ubuntu@52.66.186.93 sudo docker run -itd --name ${IMAGE_REPO_NAME}-${BRANCH_NAME} --network vijay -p 8000:8000 --restart always ${REPOSITORY_URI}:${BRANCH_NAME}"
-                    sh "ssh ubuntu@52.66.186.93 sudo docker run -itd --name front${IMAGE_REPO_NAME}-${BRANCH_NAME} --network vijay -p 80:80 --restart always front${REPOSITORY_URI}:${BRANCH_NAME}"
-                    sh "ssh ubuntu@52.66.186.93 sudo docker run --name mongodb --network vijay -p 27017:27017"
+                    sh "ssh ubuntu@52.66.186.93 sudo docker run -itd --name back${IMAGE_REPO_NAME}-${BRANCH_NAME} --network vijay -p 8000:8000 --restart always back${REPOSITORY_URI}:${BRANCH_NAME}"
+                    sh "ssh ubuntu@52.66.186.93 sudo docker run -itd --name front${IMAGE_REPO_NAME}-${BRANCH_NAME} --network vijay -p 80:80 --restart always front${REPOSITORY_URI}:${BRANCH_NAME}"     
                 }
             }
         }
