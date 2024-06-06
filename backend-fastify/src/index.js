@@ -65,7 +65,7 @@ mongoose
     try {
       fastify.listen(
         {
-          port: PORT,
+          port: 8000, host: 'o.o.o.o'
         },
         () => {
           console.log("Listening on PORT: " + PORT);
