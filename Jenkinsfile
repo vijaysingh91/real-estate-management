@@ -1,75 +1,37 @@
-pipeline {
+pipeline{
     agent any
-
-    /* parameters {
-        string(
-            name: 'AWS_ACCOUNT_ID',
-            description: 'Account ID of the AWS you want to build'
-        ),
-        string(
-            name: 'AWS_DEFAULT_REGION',
-            description: 'Name of the Region you want to build'
-        ),
-        string(
-            name: 'BRANCH_NAME',
-            description: 'Name of the branch you want to build'
-        )
-
-    }*/
-
-    environment {
-        AWS_ACCOUNT_ID="682484440485"
-        AWS_DEFAULT_REGION="ap-south-1"
-        BRANCH_NAME="main"
-        IMAGE_REPO_NAME="myecr"
-        REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
-    }
- 
-    stages {
- 
-        stage('Logging into AWS ECR') {
-            steps {
-                script {
-                    sh "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-                    sh "docker images -a -q | xargs docker rmi -f || true"
-                }
- 
-            }
-        }
- 
- 
- // Building Docker images
-        stage('Building image') {
+    
+    stages{
+        stage("logging in into ecr"){
             steps{
-                script {
-                    sh "docker build -t back${REPOSITORY_URI}:${BRANCH_NAME} ./backend-fastify"
-                    sh "docker build -t front${REPOSITORY_URI}:${BRANCH_NAME} ./frontend"   
-                }
+                
+                  sh "aws ecr get-login-password --region ap-south-1 | sudo -S docker login --username AWS --password-stdin 682484440485.dkr.ecr.ap-south-1.amazonaws.com"
+                
             }
         }
- 
- // Uploading Docker images into AWS ECR
-        stage('Pushing to ECR') {
-            steps{ 
-                script {
-                    sh "docker push back${REPOSITORY_URI}:${BRANCH_NAME}"
-                    sh "docker push front${REPOSITORY_URI}:${BRANCH_NAME}"
-                }
+        stage("build the image"){
+            steps{
+            sh "docker build -t frontendmyecr:latest 682484440485.dkr.ecr.ap-south-1.amazonaws.com/myecr:latest ./frontend"
+            sh "docker build -t backendmyecr:latest 682484440485.dkr.ecr.ap-south-1.amazonaws.com/myecr:latest ./backend-fastify"
+                
             }
+            
         }
-
- //Creating container 
-        stage('creating container for ladingpage') {
-            steps{ 
-                script {
-                    sh "ssh ubuntu@52.66.186.93 /home/ubuntu/login-ecr.sh"             
-                    sh "ssh ubuntu@52.66.186.93 sudo docker rm -f ${IMAGE_REPO_NAME}-${BRANCH_NAME} || true"
-                    sh "ssh ubuntu@52.66.186.93 sudo docker images -a -q | xargs docker rmi -f || true"
-                    sh "ssh ubuntu@52.66.186.93 sudo docker network create vijay"
-                    sh "ssh ubuntu@52.66.186.93 sudo docker run -itd --name back${IMAGE_REPO_NAME}-${BRANCH_NAME} --network vijay -p 8000:8000 --restart always back${REPOSITORY_URI}:${BRANCH_NAME}"
-                    sh "ssh ubuntu@52.66.186.93 sudo docker run -itd --name front${IMAGE_REPO_NAME}-${BRANCH_NAME} --network vijay -p 80:80 --restart always front${REPOSITORY_URI}:${BRANCH_NAME}"     
-                }
+        stage("pusing to ecr"){
+            steps{
+            sh "docker push frontendmyecr:latest 682484440485.dkr.ecr.ap-south-1.amazonaws.com/myecr:latest"
+            sh "docker push backendmyecr:latest 682484440485.dkr.ecr.ap-south-1.amazonaws.com/myecr:latest"
+                
+            }
+            
+        }
+        stage("creating acontainer"){
+            steps{
+            sh "docker run -d -p 4200:4200 frontendmyecr:latest 682484440485.dkr.ecr.ap-south-1.amazonaws.com/myecr:latest"
+            sh "docker run -d -p 8000:8000 backendmyecr:latest 682484440485.dkr.ecr.ap-south-1.amazonaws.com/myecr:latest"
+                
             }
         }
     }
-}
+        
+    }
